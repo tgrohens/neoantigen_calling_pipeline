@@ -7,10 +7,10 @@
 # the results in an appropriately-named output file.
 #
 # Input format: python runNetMHCpan.py len9peptides.txt,len10peptides.txt HLAalleles.txt 1 outpath
-# 	Options for specifying which netMHCpan version: 
+# 	Options for specifying which netMHCpan version:
 #	1 = netMHCIpan
 #	2 = netMHCIIpan
-# *RELEVANT*: HLA allele input file can be in one of two formats: 
+# *RELEVANT*: HLA allele input file can be in one of two formats:
 #	1. Polysolver winners_hla.txt output file
 # 		example line from file: HLA-A   hla_a_02_01_01_01       hla_a_32_01_01
 # 	2. Already processed, one allele per line in netMHC compatible format
@@ -35,11 +35,11 @@ import os
 
 # ----------------------------------------------------------------------------------------------- #
 # Function: runNetMHCIpan
-# Inputs: FASTA file of peptide sequences, patient HLA alleles (these are automatically given 
-# by Polysolver and come in a .txt file that needs to be pre-processed into the correct format for 
-# netMHCpan), peptide length outpath 
+# Inputs: FASTA file of peptide sequences, patient HLA alleles (these are automatically given
+# by Polysolver and come in a .txt file that needs to be pre-processed into the correct format for
+# netMHCpan), peptide length outpath
 # Returns: None (netMHCpan will automatically write output to a .xls file)
-# Summary: Pre-processes patient HLA alleles, runs netMHCIpan. 
+# Summary: Pre-processes patient HLA alleles, runs netMHCIpan.
 def runNetMHCIpan(pepfile, hlafile, length, outpath):
 	# Determine whether we're dealing with a snv or indel file (for naming the outfile)
 	varianttype = ''
@@ -67,10 +67,11 @@ def runNetMHCIpan(pepfile, hlafile, length, outpath):
 	hlaalleles = list(set(hlaalleles))  # Remove duplicate alleles if there are any
 	hlastring = ','.join(hlaalleles)
 	# Run netMHCI pan
-	command =  'export NHOME=/netMHCpan-4.1; export NETMHCpan=/netMHCpan-4.1/Linux_x86_64; /netMHCpan-4.1/Linux_x86_64/bin/netMHCpan -a '+hlastring+' -f '+pepfile+' -inptype 0 -l '+str(length)+' -s -xls -xlsfile '+outpath+'/NETMHCpan_out_'+str(length)+varianttype+'.xls -allname /netMHCpan-4.1/Linux_x86_64/data/allelenames -hlapseudo /netMHCpan-4.1/Linux_x86_64/data/MHC_pseudo.dat -t 500 -version /xchip/cga_home/margolis/Packages/netMHCPan/netMHCpan-3.0/data/version -tdir /netMHCpan-4.1/scratch/XXXXXX -rdir /netMHCpan-4.1/Linux_x86_64/ > '+outpath+'/netMHCpanoutlen_'+str(length)+varianttype+'.txt'
+	netmhcpath = '/users/dweghorn/tgrohens/tools/netMHCpan-4.1'
+	command =  'export NHOME='+netmhcpath+'; export NETMHCpan='+netmhcpath+'/Linux_x86_64; '+netmhcpath+'/Linux_x86_64/bin/netMHCpan -a '+hlastring+' -f '+pepfile+' -inptype 0 -l '+str(length)+' -s -xls -xlsfile '+outpath+'/NETMHCpan_out_'+str(length)+varianttype+'.xls -allname '+netmhcpath+'/Linux_x86_64/data/allelenames -hlapseudo '+netmhcpath+'/Linux_x86_64/data/MHC_pseudo.dat -t 500 -version '+netmhcpath+'/data/version -tdir '+netmhcpath+'/scratch/XXXXXX -rdir '+netmhcpath+'/Linux_x86_64/ > '+outpath+'/netMHCpanoutlen_'+str(length)+varianttype+'.txt'
 	subprocess.call(command, shell=True)
-	
-	# Catch case where peptide file was empty (create dummy file) 
+
+	# Catch case where peptide file was empty (create dummy file)
 	dummyfile = outpath+'/NETMHCpan_out_'+str(length)+varianttype+'.xls'
 	open(dummyfile, 'a').close()
 
@@ -81,9 +82,9 @@ def runNetMHCIpan(pepfile, hlafile, length, outpath):
 
 # ----------------------------------------------------------------------------------------------- #
 # Function: runNetMHCIIpan
-# Inputs: FASTA file of peptide sequences, patient HLA alleles (these are automatically given 
-# by Polysolver and come in a .txt file that needs to be pre-processed into the correct format for 
-# netMHCIIpan), peptide length outpath 
+# Inputs: FASTA file of peptide sequences, patient HLA alleles (these are automatically given
+# by Polysolver and come in a .txt file that needs to be pre-processed into the correct format for
+# netMHCIIpan), peptide length outpath
 # Returns: None (netMHCIIpan will automatically write output to a .xls file)
 # Summary: Pre-processes patient HLA alleles, runs netMHCIIpan
 def runNetMHCIIpan(pepfile, hlafile, length, outpath):
@@ -140,9 +141,9 @@ def runNetMHCIIpan(pepfile, hlafile, length, outpath):
 		command = 'export NHOME=/netMHCIIpan-4.0; export NETMHCpan=/netMHCIIpan-4.0/Linux_x86_64; /netMHCIIpan-4.0/netMHCIIpan -a '+hlastring+' -f '+pepfile+' -inptype 0 -length '+str(length)+' -fast -filter 1 -affF 500 -rankF 2.0 -s -xls -xlsfile '+outpath+'/NETMHCIIpan_out_'+str(length)+varianttype+'.xls rdir /netMHCIIpan-4.0/Linux_x86_64/ > '+outpath+'/netMHCIIpanoutlen_'+str(length)+varianttype+'.txt'
 		subprocess.call(command, shell=True)
 
-	# Catch case where peptide file was empty (create dummy file) 
+	# Catch case where peptide file was empty (create dummy file)
         dummyfile = outpath+'/NETMHCIIpan_out_'+str(length)+varianttype+'.xls'
-        open(dummyfile, 'a').close()	
+        open(dummyfile, 'a').close()
 
 	return
 
@@ -176,7 +177,7 @@ def main():
 	else:
 		for i in range(0, len(fastalist)):
 			runNetMHCIIpan(fastalist[i], alleles, lengthslist[i], outpath)
-	
+
 	return
 
 if __name__ == '__main__':
