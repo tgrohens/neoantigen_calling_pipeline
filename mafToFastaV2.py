@@ -1,11 +1,11 @@
 # ----------------------------------------------------------------------------------------------- #
 # Claire Margolis
 # mafToFasta.py
-# 
-# Summary: Takes in a .maf file of either SNVs or InDels and translates mutations to peptide 
+#
+# Summary: Takes in a .maf file of either SNVs or InDels and translates mutations to peptide
 # sequences of (desired length*2 - 1). These peptides will be fed into netMHCpan and will result
 # in getting the binding affinities of peptide of desired length with at least one AA overlapping
-# with the mutated nucleotide(s). Also outputs a map file of headers which will be used to process 
+# with the mutated nucleotide(s). Also outputs a map file of headers which will be used to process
 # and annotate the netMHC output.
 #
 # Input format: python mafToFasta.py maffile maffiletype peptidelengths patientID outpath
@@ -78,17 +78,17 @@ def DNASeqToProtein(nucs, headers, length):
 # Function: MutationsToDNASeq
 # Inputs: maffile, peptide length, patient ID, outpath, snv/indel indicator
 # Returns: List of mutant/wild type DNA sequences of desired length, list of corresponding headers
-# Summary: Takes in maf file, peptide length, patient ID, and outpath. Finds ORF orientation at 
+# Summary: Takes in maf file, peptide length, patient ID, and outpath. Finds ORF orientation at
 # mutation location from .maf file Codon_change field, based on ORF orientation calculates nucleotide
-# window to yield correct number of peptides flanking the mutation, calls twoBitToFa function to 
+# window to yield correct number of peptides flanking the mutation, calls twoBitToFa function to
 # get nucleotide sequence, writes header map to output file.
 def MutationsToDNASeq(maf, length, patID, outpath, indicator, cds_path, cdna_path):
 	# Read in maf file (desired columns only)
 	#['Hugo_Symbol' 'Entrez_Gene_Id' 'Chromosome' 'Start_position' 'End_position' 'Variant_Classification' 'Tumor_Seq_Allele2'
 	# 'Tumor_Sample_Barcode' 'Annotation_Transcript' 'Transcript_Strand' 'cDNA_Change' 'Codon_Change' 'Protein_Change' 'Variant_Type'
 	# 'Transcript_Position' 'Reference_Allele']'''
-        mafarray = np.loadtxt(maf, dtype=str, delimiter='\t', skiprows=0, usecols=(0,1,4,5,6,8,12,15, 305, 222, 302, 89, 287, 9, 278, 10), ndmin=2)
-        # Create dictionary containing lengths to go backward and forward based on ORF orientation 
+        mafarray = np.loadtxt(maf, dtype=str, delimiter='\t', skiprows=0, usecols=(0, 1, 4, 5, 6, 8, 12, 15, 35, 36, 39, 40, 41, 9, 38, 10), ndmin=2)
+        # Create dictionary containing lengths to go backward and forward based on ORF orientation
         distancedict = {0:[3,0], 1:[2,1], 2:[1,2]}
         # Open header map file for writing
 	headermapfile = ''
@@ -108,7 +108,7 @@ def MutationsToDNASeq(maf, length, patID, outpath, indicator, cds_path, cdna_pat
 	nonstopcounter = -1
 	nonstopalphabet = 'abcdefghijklmnopqrstuvwxyz!@#$%^&*()~`"/,'
 	for row in mafarray:
-		
+
 		# Check to make sure mutation is one that we care about and skip to next sequence if not
 		classification = row[5]
                 if not (classification == 'Missense_Mutation' or classification == 'Frame_Shift_Ins' or classification == 'Frame_Shift_Del' or classification == 'Nonstop_Mutation' or classification == 'In_Frame_Ins' or classification == 'In_Frame_Del'):
@@ -126,7 +126,7 @@ def MutationsToDNASeq(maf, length, patID, outpath, indicator, cds_path, cdna_pat
 				orig_start = int(((row[10].split('.')[1]).split('>')[0])[0:-1])-1 # Subtract because MAFs are 1-indexed but python is 0-indexed
 				orig_end = orig_start # SNVs only affect one position
 			else: # case of DNPs or TNPs or ONPs
-				orig_start = int((row[10].split('.')[1]).split('_')[0])-1 
+				orig_start = int((row[10].split('.')[1]).split('_')[0])-1
 				orig_end = orig_start + len(row[6].strip()) - 1 # Will be 2 for DNPs, 3 for TNPs, ... for ONPs
 		elif indicator == 0 and isnonstop == 1: # Nonstop Mutations specifically
 			if row[13] == 'SNP':
@@ -188,7 +188,7 @@ def MutationsToDNASeq(maf, length, patID, outpath, indicator, cds_path, cdna_pat
 		else:  # For InDels, do this:
 			start = orig_start - (length - distancedict[orfpos][0])
 			end = orig_start + mut_length + (length - distancedict[orfpos][1])
-		
+
 		# Get output from R script that will contain the coding sequence for transcript of interest
 		annot_transcript = row[8].split('.')[0]
 		#CONFIG_FILENAME = 'fasta_paths.config'
@@ -202,12 +202,12 @@ def MutationsToDNASeq(maf, length, patID, outpath, indicator, cds_path, cdna_pat
 			ref_path = cdna_path
 		command = "sed -n -e '/"+annot_transcript+"/,/>/ p' "+ref_path+" | sed -e '1d;$d'"
 		codingseq = subprocess.check_output(command, shell=True)
-		
+
 		# Check to see whether transcript sequence has an entry in the reference genome (if not, continue)
 		if len(codingseq) == 0:
 			print 'Error: Reference does not contain coding sequence for transcript '+annot_transcript+'. Skipping this mutation.'
 			continue
-		
+
 		# Get length of coding sequence plus position of mutation, and get desired sequence start and end indices
 		codingseq = codingseq.replace('\n','')
 		seqlength = len(codingseq)
@@ -224,7 +224,7 @@ def MutationsToDNASeq(maf, length, patID, outpath, indicator, cds_path, cdna_pat
 				seqend = end
 			else:
 				seqend = seqlength-1
-		
+
 		# Retrieve sequence desired
 		sequence = codingseq[seqstart:seqend+1]
 
@@ -244,14 +244,14 @@ def MutationsToDNASeq(maf, length, patID, outpath, indicator, cds_path, cdna_pat
 		if isnonstop == 1:
 			nonstopseqlist = [mutatedseq]
 			nonstopheaderlist = ['>seq_'+nonstopalphabet[nonstopcounter]+'_mut']
-			nonstoppeptide, nonstoppepheader = DNASeqToProtein(nonstopseqlist, nonstopheaderlist, length/3)		
+			nonstoppeptide, nonstoppepheader = DNASeqToProtein(nonstopseqlist, nonstopheaderlist, length/3)
 			if len(nonstoppeptide) < 1 or len(nonstoppepheader) < 1: # If we hit a stop codon and can't make a large enough peptide, continue
 				isnonstop = 0
 				continue
 			nonstopfilehandle = outpath+'/len'+str(length/3)+'pep_FASTA_indel.txt'
 			f = open(nonstopfilehandle, 'a')
 			f.write(nonstoppepheader[0]+'\n'+nonstoppeptide[0]+'\n')
-			nonstopheadermapfile.write('>seq_'+nonstopalphabet[nonstopcounter]+'\t'+patID+'|'+row[7]+'|chr'+row[2]+':'+row[3]+'-'+row[4]+'|'+row[8]+'|'+row[0]+'|'+row[1]+'|'+row[10]+'|'+row[12]+'\n')
+			nonstopheadermapfile.write('>seq_'+nonstopalphabet[nonstopcounter]+'\t'+patID+'|'+row[7]+'|'+row[2]+':'+row[3]+'-'+row[4]+'|'+row[8]+'|'+row[0]+'|'+row[1]+'|'+row[10]+'|'+row[12]+'\n')
 			isnonstop = 0
 			continue
 
@@ -262,9 +262,9 @@ def MutationsToDNASeq(maf, length, patID, outpath, indicator, cds_path, cdna_pat
 			seqlist.append(sequence)
 			headerlist.append('>seq_'+str(counter)+'_wt')
 		# Write maf annotation information to map file (will be used in netMHC postprocessing)
-		headermapfile.write('>seq_'+str(counter)+'\t'+patID+'|'+row[7]+'|chr'+row[2]+':'+row[3]+'-'+row[4]+'|'+row[8]+'|'+row[0]+'|'+row[1]+'|'+row[10]+'|'+row[12]+'\n')
+		headermapfile.write('>seq_'+str(counter)+'\t'+patID+'|'+row[7]+'|'+row[2]+':'+row[3]+'-'+row[4]+'|'+row[8]+'|'+row[0]+'|'+row[1]+'|'+row[10]+'|'+row[12]+'\n')
 		counter += 1
-	headermapfile.close()		
+	headermapfile.close()
 
 	return seqlist, headerlist
 # ----------------------------------------------------------------------------------------------- #
@@ -275,7 +275,7 @@ def MutationsToDNASeq(maf, length, patID, outpath, indicator, cds_path, cdna_pat
 # Inputs: list of peptides, corresponding headers, current length, outpath, SNV vs. InDel indicator
 # Returns: None (writes to file)
 # Summary: Writes header+peptide combos to a file, one item per line, that will be an input to netMHC.
-# Example output file name: path/len9pep_snv_FASTA.txt (this file would contain SNV peptides of length 9). 
+# Example output file name: path/len9pep_snv_FASTA.txt (this file would contain SNV peptides of length 9).
 def writeToOutfile(peps, headers, length, outpath, indicator):
 	filehandle = ''
 	# If SNVs, do this:
@@ -337,4 +337,4 @@ def main():
 if __name__ == '__main__':
     main()
 # ----------------------------------------------------------------------------------------------- #
-                                                                                                       
+
