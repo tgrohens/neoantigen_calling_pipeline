@@ -68,6 +68,7 @@ def runNetMHCIpan(pepfile, hlafile, length, outpath):
 	hlastring = ','.join(hlaalleles)
 	# Run netMHCI pan
 	netmhcpath = '/users/dweghorn/tgrohens/tools/netMHCpan-4.1'
+	# To add binding affinities: add the -BA flag to the command
 	command =  'export NHOME='+netmhcpath+'; export NETMHCpan='+netmhcpath+'/Linux_x86_64; '+netmhcpath+'/Linux_x86_64/bin/netMHCpan -a '+hlastring+' -f '+pepfile+' -inptype 0 -l '+str(length)+' -s -xls -xlsfile '+outpath+'/NETMHCpan_out_'+str(length)+varianttype+'.xls -allname '+netmhcpath+'/Linux_x86_64/data/allelenames -hlapseudo '+netmhcpath+'/Linux_x86_64/data/MHC_pseudo.dat -t 500 -version '+netmhcpath+'/data/version -tdir '+netmhcpath+'/scratch/XXXXXX -rdir '+netmhcpath+'/Linux_x86_64/ > '+outpath+'/netMHCpanoutlen_'+str(length)+varianttype+'.txt'
 	subprocess.call(command, shell=True)
 
