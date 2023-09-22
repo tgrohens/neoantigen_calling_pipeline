@@ -63,7 +63,7 @@ def DNASeqToProtein(nucs, headers, length):
                         fullprotein += AA
                 # Stop at stop codon, if there is one
                 if '*' in fullprotein:
-                        substrings = ' '.join(fullprotein.split('*')).split()
+                        substrings = fullprotein.split('*')
                         if len(substrings[0]) >= int(length):
                                 peptides.append(substrings[0])
                                 pepheaders.append(headers[n])
